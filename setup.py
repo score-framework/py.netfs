@@ -7,7 +7,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 setup(
     name='score.netfs',
-    version='0.3.4'
+    version='0.3.4',
     description='Distributed file storage of The SCORE Framework',
     long_description=README,
     author='strg.at',
@@ -17,6 +17,21 @@ setup(
     packages=['score.netfs',
               'score.netfs.proxy',
               'score.netfs.proxy.operation'],
+    license='LGPL',
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Environment :: Web Environment',
+        'Framework :: Pyramid',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU Lesser General '
+            'Public License v3 or later (LGPLv3+)',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Topic :: Software Development :: Libraries :: Application Frameworks',
+    ],
     install_requires=[
         'score.init >= 0.2.4'
     ],
