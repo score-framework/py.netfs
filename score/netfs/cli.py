@@ -26,10 +26,19 @@
 
 import click
 import logging
+import logging.config
 import score.netfs as netfs
+import score.init
 
 
 log = logging.getLogger(__name__)
+
+
+def init_logging(logconf):
+    if logconf is None:
+        return
+    conf = score.init.config.parse_config_file(logconf)
+    logging.config.fileConfig(conf)
 
 
 @click.group()
@@ -42,11 +51,11 @@ def main():
 @main.command('serve')
 @click.option('-h', '--host', default='0.0.0.0')
 @click.option('-p', '--port', default=14000)
-@click.option('-d', '--debug', is_flag=True, default=False)
+@click.option('-l', '--logconf',
+              type=click.Path(file_okay=True, dir_okay=False))
 @click.argument('root', type=click.Path(file_okay=False, dir_okay=True))
-def serve(root, host, port, debug):
-    if debug:
-        logging.basicConfig(level=logging.DEBUG)
+def serve(root, host, port, logconf=None):
+    init_logging(logconf)
     from tornado.ioloop import IOLoop
     from .server import StorageServer
     server = StorageServer(root)
@@ -59,10 +68,10 @@ def serve(root, host, port, debug):
 @click.option('-h', '--host', default='0.0.0.0')
 @click.option('-p', '--port', default=14000, type=int)
 @click.option('-b', '--backend', multiple=True)
-@click.option('-d', '--debug', is_flag=True, default=False)
-def proxy(host, port, debug, backend):
-    if debug:
-        logging.basicConfig(level=logging.DEBUG)
+@click.option('-l', '--logconf',
+              type=click.Path(file_okay=True, dir_okay=False))
+def proxy(host, port, backend, logconf=None):
+    init_logging(logconf)
     from tornado.ioloop import IOLoop
     from .proxy import ProxyServer
     backends = []
@@ -79,12 +88,12 @@ def proxy(host, port, debug, backend):
 @main.command('download')
 @click.option('-h', '--host', default='127.0.0.1')
 @click.option('-p', '--port', default=14000, type=int)
-@click.option('-d', '--debug', is_flag=True, default=False)
+@click.option('-l', '--logconf',
+              type=click.Path(file_okay=True, dir_okay=False))
 @click.argument('path')
 @click.argument('file', type=click.File(mode='wb'))
-def download(host, port, path, file, debug):
-    if debug:
-        logging.basicConfig(level=logging.DEBUG)
+def download(host, port, path, file, logconf=None):
+    init_logging(logconf)
     conf = netfs.init({'host': host, 'port': port, 'cachedir': '.'})
     conf.download(path, file)
 
@@ -92,12 +101,12 @@ def download(host, port, path, file, debug):
 @main.command('upload')
 @click.option('-h', '--host', default='127.0.0.1')
 @click.option('-p', '--port', default=14000, type=int)
-@click.option('-d', '--debug', is_flag=True, default=False)
+@click.option('-l', '--logconf',
+              type=click.Path(file_okay=True, dir_okay=False))
 @click.argument('path')
 @click.argument('file', type=click.Path(file_okay=True, dir_okay=False))
-def upload(host, port, path, file, debug):
-    if debug:
-        logging.basicConfig(level=logging.DEBUG)
+def upload(host, port, path, file, logconf=None):
+    init_logging(logconf)
     conf = netfs.init({'server': '{}:{}'.format(host, port), 'cachedir': '.'})
     fp = open(file, 'rb')
     conf.upload(path, fp)
