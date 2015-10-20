@@ -7,7 +7,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 setup(
     name='score.netfs',
-    version='0.3.6',
+    version='0.3.7',
     description='Distributed file storage of The SCORE Framework',
     long_description=README,
     author='strg.at',
@@ -35,7 +35,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
     ],
     install_requires=[
-        'score.init >= 0.2.4'
+        'score.init >= 0.2.9'
     ],
     extras_require={
         'server': ['tornado']
