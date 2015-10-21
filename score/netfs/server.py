@@ -129,6 +129,7 @@ class FileUpload:
         """
         if os.path.exists(self.path):
             fd, tmp = tempfile.mkstemp(dir=os.path.dirname(self.path))
+            os.close(fd)
             shutil.move(self.path, tmp)
             shutil.move(self.tmp, self.path)
             self.tmp = tmp
@@ -264,7 +265,8 @@ class Communication:
         for op in self.transaction:
             try:
                 op.commit()
-            except:
+            except Exception as e:
+                log.debug(e)
                 for op in self.transaction:
                     op.abort()
                 self.transaction = []
