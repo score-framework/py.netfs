@@ -161,7 +161,7 @@ class ConfiguredNetfsModule(ConfiguredModule):
                 shutil.copy2(file, realpath)
             file = open(realpath, 'rb')
         else:
-            open(realpath, 'wb').write(file)
+            shutil.copyfileobj(file, open(realpath, 'wb'))
         if self.host:
             self.upload(path, file)
 
