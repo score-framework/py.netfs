@@ -58,10 +58,13 @@ def serve(root, host, port, logconf=None):
     init_logging(logconf)
     from tornado.ioloop import IOLoop
     from .server import StorageServer
-    server = StorageServer(root)
-    server.listen(port, address=host)
-    IOLoop.instance().start()
-    IOLoop.instance().close()
+    try:
+        server = StorageServer(root)
+        server.listen(port, address=host)
+        IOLoop.instance().start()
+        IOLoop.instance().close()
+    except Exception as e:
+        log.exception(e)
 
 
 @main.command('proxy')
@@ -79,10 +82,13 @@ def proxy(host, port, backend, logconf=None):
         b = b.split(':')
         b[1] = int(b[1])
         backends.append(b)
-    server = ProxyServer(backends)
-    server.listen(port, address=host)
-    IOLoop.instance().start()
-    IOLoop.instance().close()
+    try:
+        server = ProxyServer(backends)
+        server.listen(port, address=host)
+        IOLoop.instance().start()
+        IOLoop.instance().close()
+    except Exception as e:
+        log.exception(e)
 
 
 @main.command('download')
