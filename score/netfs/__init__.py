@@ -333,22 +333,21 @@ class _CtxDataManager:
     will commit all uploaded files at the end of the transaction.
     """
 
-    _transactions = []
+    _connections = []
 
     @classmethod
     def join(cls, connection, tx):
-        if tx in cls._transactions:
-            return
-        cls._transactions.append(tx)
-        tx.join(cls(connection))
+        if tx not in cls._connections:
+            tx.join(cls(connection))
 
     def __init__(self, connection):
         self.transaction_manager = connection.conf.ctx_conf.tx_manager
         self.connection = connection
+        self.__class__._connections.append(connection)
 
     def abort(self, transaction):
         self.connection.rollback()
-        self.__class__._transactions.remove(transaction)
+        self.__class__._connections.remove(self.connection)
 
     def tpc_begin(self, transaction):
         pass
@@ -361,11 +360,11 @@ class _CtxDataManager:
 
     def tpc_finish(self, transaction):
         self.connection.commit()
-        self.__class__._transactions.remove(transaction)
+        self.__class__._connections.remove(self.connection)
 
     def tpc_abort(self, transaction):
         self.connection.rollback()
-        self.__class__._transactions.remove(transaction)
+        self.__class__._connections.remove(self.connection)
 
     def sortKey(self):
         return 'score.netfs(%d)' % id(self)
