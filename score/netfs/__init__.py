@@ -98,7 +98,7 @@ def init(confdict, ctx_conf=None):
     c = ConfiguredNetfsModule(host, port, cachedir, delcache)
     c.ctx_conf = ctx_conf
     if ctx_conf and conf['ctx.member'] not in ('None', None):
-        ctx_conf.register(conf['ctx.member'], lambda _: c)
+        ctx_conf.register(conf['ctx.member'], lambda _: c.connect())
     return c
 
 
@@ -120,8 +120,6 @@ class ConfiguredNetfsModule(ConfiguredModule):
     <score.init.ConfiguredModule>`.
     """
 
-    CHUNK_SIZE = 1024 * 1024
-
     def __init__(self, host, port, cachedir, delcache):
         super().__init__(__package__)
         self.host = host
@@ -139,6 +137,25 @@ class ConfiguredNetfsModule(ConfiguredModule):
             self._cachedir = tempfile.mkdtemp(prefix='netfs-', suffix='.tmp')
         return self._cachedir
 
+    def connect(self):
+        """
+        Connects to the configured server and returns a
+        :class:`.NetfsConnection`.
+        """
+        return NetfsConnection(self)
+
+
+class NetfsConnection:
+
+    CHUNK_SIZE = 1024 * 1024
+
+    def __init__(self, conf):
+        self.conf = conf
+        if self.conf.host:
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket.connect((self.conf.host, self.conf.port))
+            self.socket.settimeout(None)
+
     def put(self, path, file, *, move=True):
         """
         Uploads a file with given *path* to the server and moves it into the
@@ -148,8 +165,9 @@ class ConfiguredNetfsModule(ConfiguredModule):
         In case the *file* parameter was a string, it is possible to keep that
         original file in place by specifying a falsy value for *move*.
         """
-        realpath = os.path.realpath(os.path.join(self.cachedir, path))
-        if os.path.commonprefix((self.cachedir, realpath)) != self.cachedir:
+        realpath = os.path.realpath(os.path.join(self.conf.cachedir, path))
+        path_prefix = os.path.commonprefix((self.conf.cachedir, realpath))
+        if path_prefix != self.conf.cachedir:
             raise ValueError('Invalid path: ' + path)
         dirname = os.path.dirname(realpath)
         if dirname:
@@ -162,7 +180,7 @@ class ConfiguredNetfsModule(ConfiguredModule):
             file = open(realpath, 'rb')
         else:
             shutil.copyfileobj(file, open(realpath, 'wb'))
-        if self.host:
+        if self.conf.host:
             self.upload(path, file)
 
     def get(self, path):
@@ -170,8 +188,9 @@ class ConfiguredNetfsModule(ConfiguredModule):
         Returns the local path to a file, downloading it from the server, if it
         does not already exist in the local cache folder.
         """
-        realpath = os.path.realpath(os.path.join(self.cachedir, path))
-        if os.path.commonprefix((self.cachedir, realpath)) != self.cachedir:
+        realpath = os.path.realpath(os.path.join(self.conf.cachedir, path))
+        path_prefix = os.path.commonprefix((self.conf.cachedir, realpath))
+        if path_prefix != self.conf.cachedir:
             raise ValueError('Invalid path: ' + path)
         if os.path.exists(realpath):
             return realpath
@@ -198,7 +217,7 @@ class ConfiguredNetfsModule(ConfiguredModule):
         Puts the contents of given :term:`file object` *file* with given *path*
         onto the server. Do not forget to call :meth:`.commit` when you're done!
         """
-        if self.host is None:
+        if self.conf.host is None:
             raise UploadFailed('No server configured')
         if not isinstance(path, bytes):
             path = path.encode('UTF-8')
@@ -219,15 +238,15 @@ class ConfiguredNetfsModule(ConfiguredModule):
         response = struct.unpack('b', self._read(1))[0]
         if response != Constants.RESP_OK:
             raise UploadFailed()
-        if self.ctx_conf:
-            _CtxDataManager.join(self, self.ctx_conf.tx_manager.get())
+        if self.conf.ctx_conf:
+            _CtxDataManager.join(self, self.conf.ctx_conf.tx_manager.get())
 
     def prepare(self):
         """
         Prepares the current transaction. Raises *CommitFailed* if the server
         responded with an error code.
         """
-        if self.host is None:
+        if self.conf.host is None:
             return
         self._send(struct.pack('b', Constants.REQ_PREPARE))
         response = struct.unpack('b', self._read(1))[0]
@@ -239,7 +258,7 @@ class ConfiguredNetfsModule(ConfiguredModule):
         Instructs the server to persist all uploaded files, so that other
         clients can find them.
         """
-        if self.host is None:
+        if self.conf.host is None:
             return
         self._send(struct.pack('b', Constants.REQ_COMMIT))
         response = struct.unpack('b', self._read(1))[0]
@@ -250,7 +269,7 @@ class ConfiguredNetfsModule(ConfiguredModule):
         """
         Sends a rollback command to the server.
         """
-        if self.host is None:
+        if self.conf.host is None:
             return
         self._send(struct.pack('b', Constants.REQ_ROLLBACK))
 
@@ -259,7 +278,7 @@ class ConfiguredNetfsModule(ConfiguredModule):
         Downloads the file with given *path* from the server and writes it into
         the :term:`file object` *file*.
         """
-        if self.host is None:
+        if self.conf.host is None:
             raise DownloadFailed('No server configured')
         if not isinstance(path, bytes):
             path = path.encode('UTF-8')
@@ -306,15 +325,6 @@ class ConfiguredNetfsModule(ConfiguredModule):
         log.debug('receiving {}: {}'.format(length, b''.join(chunks)))
         return b''.join(chunks)
 
-    @property
-    def socket(self):
-        if hasattr(self, '_socket'):
-            return self._socket
-        assert self.host is not None
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket.connect((self.host, self.port))
-        return self._socket
-
 
 @implementer(IDataManager)
 class _CtxDataManager:
@@ -326,18 +336,18 @@ class _CtxDataManager:
     _transactions = []
 
     @classmethod
-    def join(cls, netfs, tx):
+    def join(cls, connection, tx):
         if tx in cls._transactions:
             return
         cls._transactions.append(tx)
-        tx.join(cls(netfs))
+        tx.join(cls(connection))
 
-    def __init__(self, netfs):
-        self.transaction_manager = netfs.ctx_conf.tx_manager
-        self.netfs = netfs
+    def __init__(self, connection):
+        self.transaction_manager = connection.conf.ctx_conf.tx_manager
+        self.connection = connection
 
     def abort(self, transaction):
-        self.netfs.rollback()
+        self.connection.rollback()
         self.__class__._transactions.remove(transaction)
 
     def tpc_begin(self, transaction):
@@ -347,14 +357,14 @@ class _CtxDataManager:
         pass
 
     def tpc_vote(self, transaction):
-        self.netfs.prepare()
+        self.connection.prepare()
 
     def tpc_finish(self, transaction):
-        self.netfs.commit()
+        self.connection.commit()
         self.__class__._transactions.remove(transaction)
 
     def tpc_abort(self, transaction):
-        self.netfs.rollback()
+        self.connection.rollback()
         self.__class__._transactions.remove(transaction)
 
     def sortKey(self):
