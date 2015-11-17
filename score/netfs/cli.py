@@ -66,6 +66,7 @@ def serve(folder, host, port, logconf=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 def read_server_conf(section):
@@ -131,6 +132,7 @@ def serve_conf(conf, name=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 @main.command('proxy')
@@ -155,6 +157,7 @@ def proxy(host, port, backend, logconf=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 def read_proxy_conf(section):
@@ -240,6 +243,7 @@ def proxy_conf(conf, name=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 @main.command('download')
