@@ -100,7 +100,7 @@ def proxy(host, port, backend, logconf=None):
 @click.argument('file', type=click.File(mode='wb'))
 def download(host, port, path, file, logconf=None):
     init_logging(logconf)
-    conf = netfs.init({'host': host, 'port': port, 'cachedir': '.'})
+    conf = netfs.init({'server': '{}:{}'.format(host, port), 'cachedir': '.'})
     conf.connect().download(path, file)
 
 
