@@ -71,7 +71,7 @@ class Backend:
                     return self.reconnect()
                 elif error_callback:
                     error_callback(self)
-            log.info('connected to {}'.format(self))
+            log.debug('connected to {}'.format(self))
             stream.set_close_callback(self._stream_closed)
             self.stream = stream
             if success_callback:
