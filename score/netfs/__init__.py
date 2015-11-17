@@ -337,7 +337,7 @@ class _CtxDataManager:
 
     @classmethod
     def join(cls, connection, tx):
-        if tx not in cls._instances:
+        if (connection, tx) not in cls._instances:
             tx.join(cls(connection, tx))
 
     def __init__(self, connection, transaction):
