@@ -36,12 +36,12 @@ class CommitOperation(Operation):
         if self.frontend.transaction_backends is None:
             self.log.debug('success (no operations)!')
             data = struct.pack('!b', Constants.RESP_OK)
-            self.write(data, self.read_op)
+            self.write(data, self.frontend.read_op)
             return
         if not self.frontend.transaction_backends:
             self.log.debug('error (no backends)!')
             data = struct.pack('!b', Constants.RESP_ERROR)
-            self.write(data, self.read_op)
+            self.write(data, self.frontend.read_op)
             return
         self.success = False
         data = struct.pack('!b', Constants.REQ_COMMIT)
