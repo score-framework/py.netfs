@@ -66,6 +66,7 @@ def serve(folder, host, port, logconf=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 def read_server_conf(section):
@@ -131,6 +132,7 @@ def serve_conf(conf, name=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 @main.command('proxy')
@@ -155,6 +157,7 @@ def proxy(host, port, backend, logconf=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 def read_proxy_conf(section):
@@ -220,12 +223,14 @@ def proxy_conf(conf, name=None):
         backends = []
         for section in conf:
             if section == 'server' or section.startswith('server-'):
-                folder, host, port = read_server_conf(conf[section])
-                if (host, port) in backends:
-                    log.debug('Ignoring duplicate backend %s:%d' % (host, port))
+                # calling the variables here h and p so they don't clash with
+                # the proxy host/port
+                _, h, p = read_server_conf(conf[section])
+                if (h, p) in backends:
+                    log.debug('Ignoring duplicate backend %s:%d' % (h, p))
                     continue
-                log.debug('Adding backend %s:%d' % (host, port))
-                backends.append((host, port))
+                log.debug('Adding backend %s:%d' % (h, p))
+                backends.append((h, p))
     if not backends:
         raise click.ClickException('No backends configured')
     from tornado.ioloop import IOLoop
@@ -238,6 +243,7 @@ def proxy_conf(conf, name=None):
         IOLoop.instance().close()
     except Exception as e:
         log.exception(e)
+        raise
 
 
 @main.command('download')
