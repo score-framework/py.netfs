@@ -7,7 +7,7 @@ with open(os.path.join(here, 'README.rst')) as f:
 
 setup(
     name='score.netfs',
-    version='0.3.14',
+    version='0.3.15',
     description='Distributed file storage of The SCORE Framework',
     long_description=README,
     author='strg.at',
