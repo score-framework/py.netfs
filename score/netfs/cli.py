@@ -101,7 +101,7 @@ def proxy(host, port, backend, logconf=None):
 def download(host, port, path, file, logconf=None):
     init_logging(logconf)
     conf = netfs.init({'host': host, 'port': port, 'cachedir': '.'})
-    conf.download(path, file)
+    conf.connect().download(path, file)
 
 
 @main.command('upload')
@@ -115,8 +115,9 @@ def upload(host, port, path, file, logconf=None):
     init_logging(logconf)
     conf = netfs.init({'server': '{}:{}'.format(host, port), 'cachedir': '.'})
     fp = open(file, 'rb')
-    conf.upload(path, fp)
-    conf.commit()
+    conn = conf.connect()
+    conn.upload(path, fp)
+    conn.commit()
 
 if __name__ == '__main__':
     main()
