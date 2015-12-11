@@ -406,6 +406,11 @@ class StorageServer(TCPServer):
         TCPServer.__init__(self, **kwargs)
 
     def handle_stream(self, stream, address):
+        # TODO: the current approach using callbacks to stream functions (i.e.
+        # stream.read_bytes(amount, callback)) makes it extremely hard to
+        # capture all exceptions raised during the communication.  this function
+        # (and the proxy, too) should instead use coroutines:
+        # http://www.tornadoweb.org/en/stable/gen.html#tornado.gen.coroutine
         Communication(self, stream)
 
     def get_path(self, name):
