@@ -54,8 +54,9 @@ class Operation(metaclass=OperationMeta):
     def __init__(self, frontend, name):
         self.frontend = frontend
         loop = IOLoop.current()
-        self.log = logging.getLogger('score.netfs.proxy.{}.{}'.
-                                     format(name, loop.time()))
+        self.log = logging.LoggerAdapter(
+            logging.getLogger('score.netfs.proxy.' + name),
+            {'timestamp': loop.time()})
         self.log.debug('init')
 
     def read(self, *args, **kwargs):
