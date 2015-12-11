@@ -82,16 +82,15 @@ class FileUpload:
         os.makedirs(os.path.dirname(value), exist_ok=True)
         self.tmp = value + '.tmp'
         try:
-            op = next(op for op in self.communication.transaction
-                         if isinstance(op, FileUpload)
-                         and op.tmp == self.tmp)
+            op = next(op
+                      for op in self.communication.transaction
+                      if isinstance(op, FileUpload) and op.tmp == self.tmp)
             op.abort()
             self.communication.transaction.remove(op)
         except StopIteration:
             pass
         try:
             self.file = open(self.tmp, 'xb')
-            # TODO: file lock!
         except OSError as e:
             log.error(e)
             self.error = 'ErrorOpeningFile'
