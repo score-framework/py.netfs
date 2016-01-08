@@ -43,7 +43,7 @@ defaults = {
 }
 
 
-def init(confdict, ctx_conf=None):
+def init(confdict, ctx=None):
     """
     Initializes this module acoording to :ref:`our module initialization
     guidelines <module_initialization>` with the following configuration keys:
@@ -89,9 +89,9 @@ def init(confdict, ctx_conf=None):
     else:
         delcache = parse_bool(conf['deltmpcache'])
     c = ConfiguredNetfsModule(host, port, cachedir, delcache)
-    c.ctx_conf = ctx_conf
-    if ctx_conf and conf['ctx.member'] not in ('None', None):
-        ctx_conf.register(conf['ctx.member'], lambda _: c.connect())
+    c.ctx = ctx
+    if ctx and conf['ctx.member'] not in ('None', None):
+        ctx.register(conf['ctx.member'], lambda _: c.connect())
     return c
 
 
