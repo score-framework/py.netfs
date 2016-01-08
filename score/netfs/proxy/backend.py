@@ -65,6 +65,7 @@ class Backend:
     def connect(self, success_callback=None, error_callback=None):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         stream = IOStream(s)
+
         def connected(future):
             if future.exception():
                 if self.autoconnect:
