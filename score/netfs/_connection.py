@@ -106,8 +106,8 @@ class NetfsConnection:
         response = struct.unpack('b', self._read(1))[0]
         if response != Constants.RESP_OK:
             raise UploadFailed()
-        if self.conf.ctx:
-            _CtxDataManager.join(self, self.conf.ctx.tx_manager.get())
+        if self.conf.ctx_conf:
+            _CtxDataManager.join(self, self.conf.ctx_conf.tx_manager.get())
 
     def prepare(self):
         """
