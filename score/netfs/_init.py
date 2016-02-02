@@ -89,7 +89,7 @@ def init(confdict, ctx=None):
     else:
         delcache = parse_bool(conf['deltmpcache'])
     c = ConfiguredNetfsModule(host, port, cachedir, delcache)
-    c.ctx = ctx
+    c.ctx_conf = ctx
     if ctx and conf['ctx.member'] not in ('None', None):
         ctx.register(conf['ctx.member'], lambda _: c.connect())
     return c
