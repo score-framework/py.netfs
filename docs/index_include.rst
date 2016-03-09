@@ -279,12 +279,16 @@ Configuration
 
 .. autoclass:: score.netfs.ConfiguredNetfsModule()
 
-    .. automethod:: score.netfs.ConfiguredNetfsModule.put
+    .. automethod:: score.netfs.ConfiguredNetfsModule.connect
 
-    .. automethod:: score.netfs.ConfiguredNetfsModule.get
+.. autoclass:: score.netfs.NetfsConnection()
 
-    .. automethod:: score.netfs.ConfiguredNetfsModule.upload
+    .. automethod:: score.netfs.NetfsConnection.put
 
-    .. automethod:: score.netfs.ConfiguredNetfsModule.commit
+    .. automethod:: score.netfs.NetfsConnection.get
 
-    .. automethod:: score.netfs.ConfiguredNetfsModule.download
+    .. automethod:: score.netfs.NetfsConnection.upload
+
+    .. automethod:: score.netfs.NetfsConnection.commit
+
+    .. automethod:: score.netfs.NetfsConnection.download
