@@ -24,7 +24,7 @@ class NetfsConnection:
             self.socket.connect((self.conf.host, self.conf.port))
             self.socket.settimeout(None)
 
-    def put(self, path, file, *, move=True):
+    def put(self, path, file, ctx=None, *, move=True):
         """
         Uploads a file with given *path* to the server and moves it into the
         cache folder. The *file* is either a string (denoting a file system path
@@ -49,7 +49,7 @@ class NetfsConnection:
         else:
             shutil.copyfileobj(file, open(realpath, 'wb'))
         if self.conf.host:
-            self.upload(path, file)
+            self.upload(path, file, ctx)
 
     def get(self, path):
         """
