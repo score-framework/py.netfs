@@ -80,10 +80,15 @@ class NetfsConnection:
             file.close()
         return realpath
 
-    def upload(self, path, file):
+    def upload(self, path, file, ctx=None):
         """
         Puts the contents of given :term:`file object` *file* with given *path*
-        onto the server. Do not forget to call :meth:`.commit` when you're done!
+        onto the server.
+
+        You must call :meth:`.commit` to actually persist the upload. If you are
+        using the ctx module, though, you should pass a :term:`context object`
+        as *ctx*. This will automatically commit the upload if the transaction
+        was successful.
         """
         if self.conf.host is None:
             raise UploadFailed('No server configured')
@@ -106,8 +111,8 @@ class NetfsConnection:
         response = struct.unpack('b', self._read(1))[0]
         if response != Constants.RESP_OK:
             raise UploadFailed()
-        if self.conf.ctx_conf:
-            _CtxDataManager.join(self, self.conf.ctx_conf.tx_manager.get())
+        if ctx:
+            _CtxDataManager.join(self, ctx.tx_manager)
 
     def prepare(self):
         """
@@ -204,14 +209,15 @@ class _CtxDataManager:
     _instances = []
 
     @classmethod
-    def join(cls, connection, tx):
+    def join(cls, connection, tx_manager):
+        tx = tx_manager.get()
         if (connection, tx) not in cls._instances:
-            tx.join(cls(connection, tx))
+            tx.join(cls(connection, tx_manager))
 
-    def __init__(self, connection, transaction):
-        self.transaction_manager = connection.conf.ctx_conf.tx_manager
+    def __init__(self, connection, tx_manager):
+        self.transaction_manager = tx_manager
         self.connection = connection
-        self.__class__._instances.append((self.connection, transaction))
+        self.__class__._instances.append((self.connection, tx_manager.get()))
 
     def abort(self, transaction):
         self.connection.rollback()
